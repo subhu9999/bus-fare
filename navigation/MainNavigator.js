@@ -17,10 +17,8 @@ const defaultNavOptions = {
 const MainNavigator = createStackNavigator(
   {
     Main: {
-      screen: MainScreen,
-      navigationOptions: {
-        title: "Bus Fare Calculator",
-      },
+      screen: MainScreen
+     
     },
     Source: {
       screen: SourceScreen

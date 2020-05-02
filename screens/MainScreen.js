@@ -7,18 +7,33 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
+  Share,
+  Linking
 } from "react-native";
 import Colors from "../constants/Colors";
 import { useSelector } from "react-redux";
+import Constants from "expo-constants";
+import {
+  Menu,
+  MenuOptions,
+  MenuOption,
+  MenuTrigger,
+} from "react-native-popup-menu";
+import { Entypo } from "@expo/vector-icons";
+import Toast from 'react-native-simple-toast';
+import {AdMobBanner} from 'expo-ads-admob';
 
 const MainScreen = (props) => {
   const [loading, setLoading] = useState(false);
   const [fare, setFare] = useState("");
   const [fareAc, setFareAc] = useState("");
 
+  // ca-app-pub-7589498491080333/3846583079
+
   const { source, destination } = useSelector((state) => state.busStop);
 
-  const disabled = (source === null || destination === null);
+  const disabled = source === null || destination === null;
   let sourceLabel;
   let destinationLabel;
 
@@ -35,12 +50,14 @@ const MainScreen = (props) => {
   }
 
   const handleSource = () => {
-    setFare('');
+    setFare("");
     props.navigation.navigate("Source");
   };
 
+ 
+
   const handleDestination = () => {
-    setFare('');
+    setFare("");
     props.navigation.navigate("Destination");
   };
 
@@ -55,23 +72,23 @@ const MainScreen = (props) => {
 
     try {
       let response = await fetch(
-        `http://dev.virtualearth.net/REST/v1/Routes?wayPoint.1=${wayPoint1}&waypoint.2=${wayPoint2}&maxSolutions=1&key=${key}`
+        `http://dev.virtualearth.net/REST/v1/Routes?wayPoint.1=${wayPoint1}&waypoint.2=${wayPoint2}&optimize=distance&maxSolutions=1&key=${key}`
       );
       let responseJson = await response.json();
       // console.log(responseJson.resourceSets[0].resources[0].travelDistance);
       const distance = responseJson.resourceSets[0].resources[0].travelDistance;
       let fare;
       let fareAc;
-      if (distance > 0 && distance <= 5) {
+      if (distance > 0 && distance <= 7) {
         fare = 5;
         fareAc = 6;
-      } else if (distance > 5 && distance <= 10) {
+      } else if (distance > 7 && distance <= 12) {
         fare = 10;
         fareAc = 13;
-      } else if (distance > 10 && distance <= 15) {
+      } else if (distance > 12 && distance <= 17) {
         fare = 15;
         fareAc = 19;
-      } else if (distance > 15) {
+      } else if (distance > 17) {
         fare = 20;
         fareAc = 25;
       } else {
@@ -137,7 +154,12 @@ const MainScreen = (props) => {
       </View>
 
       <View style={{ width: "50%", alignSelf: "center", marginTop: 50 }}>
-        <Button title="Find Fare" color="green" onPress={calculate} disabled={disabled} />
+        <Button
+          title="Find Fare"
+          color="green"
+          onPress={calculate}
+          disabled={disabled}
+        />
       </View>
 
       {loading && (
@@ -166,8 +188,86 @@ const MainScreen = (props) => {
           </Text>
         </View>
       )}
+      <AdMobBanner
+        bannerSize='banner'
+        adUnitID='ca-app-pub-7589498491080333/3846583079'
+        servePersonalizedAds={false}
+        testDeviceIDAsync="EMULATOR"
+      />
     </View>
   );
+};
+
+MainScreen.navigationOptions = (navigationData) => {
+  const handleShare = () => {
+    const text =
+    `Only App to find B.E.S.T Bus Fare in Mumbai \n \n` +
+    `\n\n Install App Here - https://play.google.com/store/apps/details?id=com.firebaseapp.swaptr1`;
+
+  Share.share({
+    message: text,
+  });
+  };
+
+  const handleFeedback = () => {
+    
+      Linking.openURL('mailto:swaptrofficial@gmail.com?subject=Bus%20Fare%20Calculator%20Help&body=This%20Feedback%20Is%20Regarding..')
+  };
+
+  const handleAbout = () => {
+    Toast.show("Bus Fare Calculator")
+  };
+
+  return {
+    headerTitle: () => (
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+        }}
+      >
+        <Image
+          source={require("../assets/icon.png")}
+          style={{
+            width: 50,
+            height: Constants.statusBarHeight + 10,
+            resizeMode: "contain",
+            marginRight: 10,
+          }}
+        />
+        <Text style={{ color: Colors.accent, fontSize: 22 }}>
+          Bus Fare Calculator
+        </Text>
+      </View>
+    ),
+    headerRight: () => (
+      <View style={{marginRight:5}}>
+        <Menu>
+          <MenuTrigger>
+            <Entypo
+              name="dots-three-vertical"
+              size={18}
+              color={Colors.accent}
+            />
+          </MenuTrigger>
+
+          <MenuOptions>
+            <MenuOption onSelect={handleShare}>
+              <Text style={styles.menuOption}>Share App</Text>
+            </MenuOption>
+
+            <MenuOption onSelect={handleFeedback}>
+              <Text style={styles.menuOption}>Feedback</Text>
+            </MenuOption>
+
+            <MenuOption onSelect={handleAbout}>
+              <Text style={styles.menuOption}>About</Text>
+            </MenuOption>
+          </MenuOptions>
+        </Menu>
+      </View>
+    ),
+  };
 };
 
 const styles = StyleSheet.create({
@@ -183,6 +283,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     padding: 5,
   },
+  menuOption: { margin: 5 },
 });
 
 export default MainScreen;

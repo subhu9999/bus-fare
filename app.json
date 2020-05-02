@@ -26,7 +26,10 @@
     },
     "android": {
       "package": "com.eternalarts.busfarecalculator",
-      "versionCode": 2
+      "versionCode": 2,
+      "config":{
+        "googleMobileAdsAppId": "ca-app-pub-7589498491080333~2369849870"
+      }
     }
   }
 }
