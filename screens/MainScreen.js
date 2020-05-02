@@ -13,9 +13,12 @@ import { useSelector } from "react-redux";
 
 const MainScreen = (props) => {
   const [loading, setLoading] = useState(false);
+  const [fare, setFare] = useState("");
+  const [fareAc, setFareAc] = useState("");
 
   const { source, destination } = useSelector((state) => state.busStop);
 
+  const disabled = (source === null || destination === null);
   let sourceLabel;
   let destinationLabel;
 
@@ -32,10 +35,12 @@ const MainScreen = (props) => {
   }
 
   const handleSource = () => {
+    setFare('');
     props.navigation.navigate("Source");
   };
 
   const handleDestination = () => {
+    setFare('');
     props.navigation.navigate("Destination");
   };
 
@@ -53,7 +58,29 @@ const MainScreen = (props) => {
         `http://dev.virtualearth.net/REST/v1/Routes?wayPoint.1=${wayPoint1}&waypoint.2=${wayPoint2}&maxSolutions=1&key=${key}`
       );
       let responseJson = await response.json();
-      console.log(responseJson.resourceSets[0].resources[0].travelDistance);
+      // console.log(responseJson.resourceSets[0].resources[0].travelDistance);
+      const distance = responseJson.resourceSets[0].resources[0].travelDistance;
+      let fare;
+      let fareAc;
+      if (distance > 0 && distance <= 5) {
+        fare = 5;
+        fareAc = 6;
+      } else if (distance > 5 && distance <= 10) {
+        fare = 10;
+        fareAc = 13;
+      } else if (distance > 10 && distance <= 15) {
+        fare = 15;
+        fareAc = 19;
+      } else if (distance > 15) {
+        fare = 20;
+        fareAc = 25;
+      } else {
+        fare = 0;
+        fareAc = 0;
+      }
+
+      setFare(fare);
+      setFareAc(fareAc);
       setLoading(false);
       return responseJson;
     } catch (error) {
@@ -61,10 +88,10 @@ const MainScreen = (props) => {
       console.error(error);
     }
 
-//     Upto 5 km: Non-AC Rs 5 | AC Rs 6
-// Upto 10 km: Non-AC Rs 10 | AC Rs 13
-// Upto 15 km: Non-AC Rs 15 | AC Rs 19
-// More than 15 km: Non-AC Rs 20 | AC Rs 25
+    //     Upto 5 km: Non-AC Rs 5 | AC Rs 6
+    // Upto 10 km: Non-AC Rs 10 | AC Rs 13
+    // Upto 15 km: Non-AC Rs 15 | AC Rs 19
+    // More than 15 km: Non-AC Rs 20 | AC Rs 25
   };
 
   return (
@@ -110,7 +137,7 @@ const MainScreen = (props) => {
       </View>
 
       <View style={{ width: "50%", alignSelf: "center", marginTop: 50 }}>
-        <Button title="Find Fare" color="green" onPress={calculate} />
+        <Button title="Find Fare" color="green" onPress={calculate} disabled={disabled} />
       </View>
 
       {loading && (
@@ -118,6 +145,26 @@ const MainScreen = (props) => {
           size="large"
           style={{ color: "white", marginVertical: 10 }}
         />
+      )}
+
+      {fare.length !== 0 && (
+        <View
+          style={{
+            alignSelf: "center",
+            backgroundColor: Colors.accent,
+            marginTop: 50,
+            width: "95%",
+            padding: 10,
+          }}
+        >
+          <Text style={{ fontSize: 22, fontWeight: "bold" }}>Fare</Text>
+          <Text style={{ fontSize: 18, marginVertical: 5 }}>
+            Non AC - <Text style={{ fontWeight: "bold" }}>₹ {fare}</Text>
+          </Text>
+          <Text style={{ fontSize: 18, marginVertical: 5 }}>
+            AC - <Text style={{ fontWeight: "bold" }}>₹ {fareAc}</Text>
+          </Text>
+        </View>
       )}
     </View>
   );
