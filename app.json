@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "bus-fare-calculator",
+    "name": "Bus Fare Calculator",
     "slug": "bus-fare-calculator",
     "platforms": [
       "ios",
       "android",
       "web"
     ],
-    "version": "1.0.1",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -25,11 +25,12 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.eternalarts.busfarecalculator",
-      "versionCode": 2,
+      "package": "com.mumbai.busfarecalculator",
+      "versionCode": 1,
       "config":{
         "googleMobileAdsAppId": "ca-app-pub-7589498491080333~2369849870"
-      }
+      },
+      "permissions":[]
     }
   }
 }

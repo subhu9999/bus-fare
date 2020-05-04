@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -22,14 +22,21 @@ import {
 } from "react-native-popup-menu";
 import { Entypo } from "@expo/vector-icons";
 import Toast from 'react-native-simple-toast';
-import {AdMobBanner} from 'expo-ads-admob';
+import {AdMobBanner, setTestDeviceIDAsync} from 'expo-ads-admob';
 
 const MainScreen = (props) => {
   const [loading, setLoading] = useState(false);
   const [fare, setFare] = useState("");
   const [fareAc, setFareAc] = useState("");
 
-  // ca-app-pub-7589498491080333/3846583079
+  const run = async()=>{
+    await setTestDeviceIDAsync('EMULATOR');
+
+  }
+
+  useEffect(()=>{
+   run() 
+  })
 
   const { source, destination } = useSelector((state) => state.busStop);
 
@@ -116,7 +123,7 @@ const MainScreen = (props) => {
       <View
         style={{
           flexDirection: "row",
-          margin: 10,
+          marginVertical: 10,
           justifyContent: "space-between",
         }}
       >
@@ -136,7 +143,7 @@ const MainScreen = (props) => {
       <View
         style={{
           flexDirection: "row",
-          margin: 10,
+          // margin: 10,
           justifyContent: "space-between",
         }}
       >
@@ -188,12 +195,14 @@ const MainScreen = (props) => {
           </Text>
         </View>
       )}
+      <View style={styles.bottomBanner}>
       <AdMobBanner
-        bannerSize='banner'
+        bannerSize='fullBanner'
         adUnitID='ca-app-pub-7589498491080333/3846583079'
         servePersonalizedAds={false}
-        testDeviceIDAsync="EMULATOR"
+        onDidFailToReceiveAdWithError={(a)=> console.log(a)}
       />
+      </View>
     </View>
   );
 };
@@ -201,8 +210,8 @@ const MainScreen = (props) => {
 MainScreen.navigationOptions = (navigationData) => {
   const handleShare = () => {
     const text =
-    `Only App to find B.E.S.T Bus Fare in Mumbai \n \n` +
-    `\n\n Install App Here - https://play.google.com/store/apps/details?id=com.firebaseapp.swaptr1`;
+    `Only App to find B.E.S.T Bus Fare in Mumbai \n` +
+    `\n\n Install App Here - https://play.google.com/store/apps/details?id=com.mumbai.busfarecalculator&hl=en_IN`;
 
   Share.share({
     message: text,
@@ -284,6 +293,10 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   menuOption: { margin: 5 },
+  bottomBanner: {
+    position: "absolute",
+    bottom: 0
+  }
 });
 
 export default MainScreen;
