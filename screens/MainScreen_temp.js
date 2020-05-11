@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Image,
   Share,
-  Linking
+  Linking,
 } from "react-native";
 import Colors from "../constants/Colors";
 import { useSelector } from "react-redux";
@@ -21,21 +21,87 @@ import {
   MenuTrigger,
 } from "react-native-popup-menu";
 import { Entypo } from "@expo/vector-icons";
-import Toast from 'react-native-simple-toast';
-import {AdMobBanner, setTestDeviceIDAsync} from 'expo-ads-admob';
+import Toast from "react-native-simple-toast";
+import { AdMobBanner, setTestDeviceIDAsync } from "expo-ads-admob";
+import * as SQLite from "expo-sqlite";
+import * as FileSystem from "expo-file-system";
+import { Asset } from "expo-asset";
 
 const MainScreen = (props) => {
   const [loading, setLoading] = useState(false);
   const [fare, setFare] = useState("");
   const [fareAc, setFareAc] = useState("");
 
-  const run = async()=>{
-    await setTestDeviceIDAsync('EMULATOR');
-  }
+  const getDataBase = async () => {
+    //copy db from assets to android mobile folder
+    // FileSystem.do
+    // await FileSystem.downloadAsync(
+    //   Asset.fromModule(require("../assets/NRSV.db")).uri,
+    //   `${FileSystem.documentDirectory}SQLite/NRSV.db`
+    // );
 
-  useEffect(()=>{
-   run() 
-  })
+    const internalDbName = "nrsv.db"; // Call whatever you want
+    const sqlDir = FileSystem.documentDirectory + "SQLite/";
+    if (!(await FileSystem.getInfoAsync(sqlDir + internalDbName)).exists) {
+      console.log("inside");
+      await FileSystem.makeDirectoryAsync(sqlDir, { intermediates: true });
+      const asset = Asset.fromModule(require("../assets/db/NRSV.db"));
+      await FileSystem.downloadAsync(asset.uri, sqlDir + internalDbName);
+    }
+
+
+    const internalDbAll = "all.db"; 
+    if (!(await FileSystem.getInfoAsync(sqlDir + internalDbAll)).exists) {
+      console.log("inside all");
+      await FileSystem.makeDirectoryAsync(sqlDir, { intermediates: true });
+      const assetAll = Asset.fromModule(require("../assets/db/ALL.db"));
+      await FileSystem.downloadAsync(assetAll.uri, sqlDir + internalDbAll);
+    }
+  };
+
+  const query = () => {
+    // const db = SQLite.openDatabase("nrsv.db");
+
+    const db = SQLite.openDatabase("all.db");
+    // console.log(db.version);
+
+    db.transaction(tx => {
+      tx.executeSql(
+        `SELECT * from ALL_STOPS WHERE Stops like '%darshan%';`,
+        [],
+        (_, { rows: { _array } }) => console.log({  _array })
+      );
+    });
+
+    // db.transaction(tx => {
+    //   tx.executeSql(
+    //     `select Routes from BUS_DETAILS WHERE Stops="vashi" AND Routes IN (SELECT Routes from BUS_DETAILS WHERE Stops="sanpada");`,
+    //     [],
+    //     (_, { rows: { _array } }) => console.log({  _array })
+    //   );
+    // });
+    // db.exec([{ sql: "select Routes from BUS_DETAILS WHERE Stops='sanpada'", args: [] }], false, (a, b) =>
+      // console.log(a)
+      // console.log(b[0].rows.map(row => row.Routes))
+    // b.map((b1) => console.log(b1))
+    // );
+  };
+
+  const run = async () => {
+    await setTestDeviceIDAsync("EMULATOR");
+  };
+
+  const deleteDB = async() => {
+    const sqlDir = FileSystem.documentDirectory + "SQLite/";
+    await FileSystem.deleteAsync(sqlDir + "nrsv.db", {idempotent: true}).then((res)=> console.log(res+'deletd'));
+
+}
+
+
+  useEffect(() => {
+    run();
+    getDataBase();
+  }, []);
 
   const { source, destination } = useSelector((state) => state.busStop);
 
@@ -59,8 +125,6 @@ const MainScreen = (props) => {
     setFare("");
     props.navigation.navigate("Source");
   };
-
- 
 
   const handleDestination = () => {
     setFare("");
@@ -117,18 +181,27 @@ const MainScreen = (props) => {
     // More than 15 km: Non-AC Rs 20 | AC Rs 25
   };
 
+  const handleSourcePune = () =>{
+    props.navigation.navigate("SourcePune");
+  }
+
+  const handleDestinationPune = () => {
+
+  }
+  
   return (
     <View style={styles.screen}>
+      <Button title="qwer" onPress={query} />
+      <Button title="delete db" onPress={deleteDB} />
       <View
         style={{
           flexDirection: "row",
           marginVertical: 10,
-          justifyContent: "space-around",
-          width:'100%'
+          justifyContent: "space-between",
         }}
       >
         <Text style={styles.label}>Source</Text>
-        <TouchableOpacity onPress={handleSource} style={{ width: "60%" }}>
+        <TouchableOpacity onPress={handleSource} style={{ width: "70%" }}>
           <TextInput
             placeholder="Select Bus Stop"
             placeholderTextColor={Colors.secondaryText}
@@ -144,12 +217,11 @@ const MainScreen = (props) => {
         style={{
           flexDirection: "row",
           // margin: 10,
-          justifyContent: "space-around",
-          width:'100%'
+          justifyContent: "space-between",
         }}
       >
         <Text style={styles.label}>Destination</Text>
-        <TouchableOpacity onPress={handleDestination} style={{ width: "60%" }}>
+        <TouchableOpacity onPress={handleDestination} style={{ width: "70%" }}>
           <TextInput
             placeholder="Select Bus Stop"
             placeholderTextColor={Colors.secondaryText}
@@ -169,6 +241,47 @@ const MainScreen = (props) => {
           disabled={disabled}
         />
       </View>
+
+      <View
+        style={{
+          flexDirection: "row",
+          marginVertical: 10,
+          justifyContent: "space-between",
+        }}
+      >
+        <Text style={styles.label}>Source</Text>
+        <TouchableOpacity onPress={handleSourcePune} style={{ width: "70%" }}>
+          <TextInput
+            placeholder="source pune"
+            placeholderTextColor={Colors.secondaryText}
+            style={styles.input}
+            editable={false}
+            // value={puneSourceLabel}
+            selection={{ start: 0 }}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <View
+        style={{
+          flexDirection: "row",
+          // margin: 10,
+          justifyContent: "space-between",
+        }}
+      >
+        <Text style={styles.label}>Destination</Text>
+        <TouchableOpacity onPress={handleDestinationPune} style={{ width: "70%" }}>
+          <TextInput
+            placeholder="Destination Pune"
+            placeholderTextColor={Colors.secondaryText}
+            style={styles.input}
+            editable={false}
+            // value={puneDestinationLabel}
+            selection={{ start: 0 }}
+          />
+        </TouchableOpacity>
+      </View>
+
 
       {loading && (
         <ActivityIndicator
@@ -197,13 +310,13 @@ const MainScreen = (props) => {
         </View>
       )}
       <View style={styles.bottomBanner}>
-      <AdMobBanner
+        {/* <AdMobBanner
         bannerSize='fullBanner'
         adUnitID='ca-app-pub-7589498491080333/3846583079'
         servePersonalizedAds={false}
         onDidFailToReceiveAdWithError={(a)=> console.log(a)}
-      />
-      <Text>Ads</Text>
+      /> */}
+        <Text style={{color: Colors.accent}}>Ads</Text>
       </View>
     </View>
   );
@@ -212,21 +325,22 @@ const MainScreen = (props) => {
 MainScreen.navigationOptions = (navigationData) => {
   const handleShare = () => {
     const text =
-    `Only App to find B.E.S.T Bus Fare in Mumbai \n` +
-    `\n\n Install App Here - https://play.google.com/store/apps/details?id=com.mumbai.busfarecalculator&hl=en_IN`;
+      `Only App to find B.E.S.T Bus Fare in Mumbai \n` +
+      `\n\n Install App Here - https://play.google.com/store/apps/details?id=com.mumbai.busfarecalculator&hl=en_IN`;
 
-  Share.share({
-    message: text,
-  });
+    Share.share({
+      message: text,
+    });
   };
 
   const handleFeedback = () => {
-    
-      Linking.openURL('mailto:swaptrofficial@gmail.com?subject=Bus%20Fare%20Calculator%20Help&body=This%20Feedback%20Is%20Regarding..')
+    Linking.openURL(
+      "mailto:swaptrofficial@gmail.com?subject=Bus%20Fare%20Calculator%20Help&body=This%20Feedback%20Is%20Regarding.."
+    );
   };
 
   const handleAbout = () => {
-    Toast.show("Bus Fare Calculator")
+    Toast.show("Bus Fare Calculator");
   };
 
   return {
@@ -241,9 +355,9 @@ MainScreen.navigationOptions = (navigationData) => {
           source={require("../assets/icon.png")}
           style={{
             width: 50,
-            height: Constants.statusBarHeight + 20,
+            height: Constants.statusBarHeight + 10,
             resizeMode: "contain",
-            marginRight: 5,
+            marginRight: 10,
           }}
         />
         <Text style={{ color: Colors.accent, fontSize: 22 }}>
@@ -252,7 +366,7 @@ MainScreen.navigationOptions = (navigationData) => {
       </View>
     ),
     headerRight: () => (
-      <View style={{marginRight:5}}>
+      <View style={{ marginRight: 5 }}>
         <Menu>
           <MenuTrigger>
             <Entypo
@@ -286,7 +400,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  label: { color: Colors.accent, fontSize: 18, padding: 10 ,width:'40%'},
+  label: { color: Colors.accent, fontSize: 18, padding: 10 },
   input: {
     color: Colors.accent,
     borderBottomWidth: 2,
@@ -297,8 +411,8 @@ const styles = StyleSheet.create({
   menuOption: { margin: 5 },
   bottomBanner: {
     position: "absolute",
-    bottom: 0
-  }
+    bottom: 0,
+  },
 });
 
 export default MainScreen;

@@ -31,6 +31,9 @@
         "googleMobileAdsAppId": "ca-app-pub-7589498491080333~2369849870"
       },
       "permissions":[]
+    },
+    "packagerOpts": {
+      "assetExts": ["db"]
     }
   }
 }

@@ -24,7 +24,8 @@ const MainNavigator = createStackNavigator(
       screen: SourceScreen
      
     },
-    Destination: DestinationScreen,
+    Destination: DestinationScreen
+    
   },
   {
     defaultNavigationOptions: defaultNavOptions,
