@@ -22,7 +22,7 @@ import {
 } from "react-native-popup-menu";
 import { Entypo } from "@expo/vector-icons";
 import Toast from 'react-native-simple-toast';
-import {AdMobBanner, setTestDeviceIDAsync} from 'expo-ads-admob';
+import {AdMobBanner, setTestDeviceIDAsync,AdMobInterstitial} from 'expo-ads-admob';
 
 const MainScreen = (props) => {
   const [loading, setLoading] = useState(false);
@@ -203,6 +203,7 @@ const MainScreen = (props) => {
         servePersonalizedAds={false}
         onDidFailToReceiveAdWithError={(a)=> console.log(a)}
       />
+      
       <Text>Ads</Text>
       </View>
     </View>
