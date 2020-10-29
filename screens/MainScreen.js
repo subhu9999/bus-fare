@@ -29,6 +29,8 @@ const MainScreen = (props) => {
   const [fare, setFare] = useState("");
   const [fareAc, setFareAc] = useState("");
 
+  const AD_URL = "https://wa.me/918369912192?text=I'm%20interested%20in%20reselling%20send%20me%20details.";
+  
   const run = async()=>{
     await setTestDeviceIDAsync('EMULATOR');
   }
@@ -196,7 +198,7 @@ const MainScreen = (props) => {
           </Text>
         </View>
       )}
-      <View style={styles.bottomBanner}>
+      {/* <View style={styles.bottomBanner}>
       <AdMobBanner
         bannerSize='fullBanner'
         adUnitID='ca-app-pub-7589498491080333/3846583079'
@@ -204,8 +206,28 @@ const MainScreen = (props) => {
         onDidFailToReceiveAdWithError={(a)=> console.log(a)}
       />
       
-      <Text>Ads</Text>
-      </View>
+      <Text>Ads</Text> 
+      </View>*/}
+
+<TouchableOpacity
+        style={{
+          ...styles.bottomBanner,
+          borderColor: "yellow",
+          borderWidth: 1,
+          width: "100%",
+          height: 90,
+        }}
+        onPress={() =>
+          Linking.openURL(AD_URL).catch((err) =>
+            console.error("An error occurred", err)
+          )
+        }
+      >
+        <Image
+          source={require("../assets/gift_ad.png")}
+          style={{ resizeMode: "stretch", width: "100%" }}
+        />
+      </TouchableOpacity>
     </View>
   );
 };
