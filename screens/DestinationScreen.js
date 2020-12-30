@@ -8,18 +8,18 @@ import {
   TextInput,
   SafeAreaView,
 } from "react-native";
-import BusStops from "../constants/BusStops";
 import Colors from "../constants/Colors";
 import { useDispatch } from "react-redux";
 import { setDestination } from "../store/actions/busActions";
 import {AdMobBanner, setTestDeviceIDAsync,AdMobInterstitial} from 'expo-ads-admob';
+import * as SQLite from "expo-sqlite";
 
 const DestinationScreen = (props) => {
-  const [stops, setStops] = useState(BusStops);
-  const [tempStops, setTempStops] = useState(BusStops);
+  const [stops, setStops] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const dispatch = useDispatch();
+  const db = SQLite.openDatabase("bus_details.db");
 
   const run = async()=>{
     await setTestDeviceIDAsync('EMULATOR');
@@ -27,8 +27,16 @@ const DestinationScreen = (props) => {
 
   useEffect(() => {
     run();
+    db.transaction(tx => {
+      tx.executeSql(
+        `SELECT * from STOPS_TABLE WHERE Stop like '%%';`,
+        [],
+        (_, { rows: { _array } }) => setStops(_array)
+        // (_, { rows: { _array } }) => console.log(_array)
+        );
+    });
 
-    return () => displayAd();
+    // return () => displayAd();
   }, []);
 
   const displayAd = async () => {
@@ -51,15 +59,14 @@ const DestinationScreen = (props) => {
 
   //god logic - make sure to use in swaptr
   const search = (text) => {
-    const filteredStops = tempStops.filter((stop) => {
-      let stopLowerCase = stop.toLowerCase();
-
-      let searchLowerCase = text.toLowerCase();
-
-      return stopLowerCase.indexOf(searchLowerCase) > -1;
+ 
+    db.transaction(tx => {
+      tx.executeSql(
+        `SELECT * from STOPS_TABLE WHERE Stop like '%${text}%';`,
+        [],
+      (_, { rows: { _array } }) => setStops(_array)
+      );
     });
-
-    setStops(filteredStops);
   };
 
   return (
@@ -87,7 +94,7 @@ const DestinationScreen = (props) => {
         <FlatList
           data={stops}
           renderItem={({ item, index }) => (
-            <TouchableOpacity key={index} onPress={() => onSelect(item)}>
+            <TouchableOpacity key={index} onPress={() => onSelect(item.Stop)}>
               <Text
                 style={{
                   color: Colors.accent,
@@ -95,7 +102,7 @@ const DestinationScreen = (props) => {
                   marginHorizontal: 4,
                 }}
               >
-                {item}
+                {item.Stop}
               </Text>
             </TouchableOpacity>
           )}

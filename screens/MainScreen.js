@@ -24,6 +24,10 @@ import { Entypo } from "@expo/vector-icons";
 import Toast from 'react-native-simple-toast';
 import {AdMobBanner, setTestDeviceIDAsync,AdMobInterstitial} from 'expo-ads-admob';
 
+import * as SQLite from "expo-sqlite";
+import * as FileSystem from "expo-file-system";
+import { Asset } from "expo-asset";
+
 const MainScreen = (props) => {
   const [loading, setLoading] = useState(false);
   const [fare, setFare] = useState("");
@@ -37,7 +41,21 @@ const MainScreen = (props) => {
 
   useEffect(()=>{
    run() 
-  })
+   getDataBase();
+  },[])
+
+  const getDataBase = async () => {
+    //copy db from assets to android mobile folder
+
+    const internalDbName = "bus_details.db"; // Call whatever you want
+    const sqlDir = FileSystem.documentDirectory + "SQLite/";
+    if (!(await FileSystem.getInfoAsync(sqlDir + internalDbName)).exists) {
+      console.log("inside");
+      await FileSystem.makeDirectoryAsync(sqlDir, { intermediates: true });
+      const asset = Asset.fromModule(require("../assets/db/BUS_DETAILS.db"));
+      await FileSystem.downloadAsync(asset.uri, sqlDir + internalDbName);
+    }
+  };
 
   const { source, destination } = useSelector((state) => state.busStop);
 
@@ -48,7 +66,7 @@ const MainScreen = (props) => {
   if (source) {
     let testing = source.split(",").splice(-3);
     sourceLabel = testing[0] + " " + testing[1];
-    // console.log(filterCity)
+    // console.log(testing)
   }
   //extract last 2 words i.e town name & state
   if (destination) {
