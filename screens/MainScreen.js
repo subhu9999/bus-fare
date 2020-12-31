@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -6,10 +6,13 @@ import {
   Button,
   TextInput,
   TouchableOpacity,
+  TouchableHighlight,
   ActivityIndicator,
   Image,
   Share,
-  Linking
+  Linking,
+  ScrollView,
+  Modal,
 } from "react-native";
 import Colors from "../constants/Colors";
 import { useSelector } from "react-redux";
@@ -21,28 +24,38 @@ import {
   MenuTrigger,
 } from "react-native-popup-menu";
 import { Entypo } from "@expo/vector-icons";
-import Toast from 'react-native-simple-toast';
-import {AdMobBanner, setTestDeviceIDAsync,AdMobInterstitial} from 'expo-ads-admob';
+import Toast from "react-native-simple-toast";
+import {
+  AdMobBanner,
+  setTestDeviceIDAsync,
+  AdMobInterstitial,
+} from "expo-ads-admob";
 
 import * as SQLite from "expo-sqlite";
 import * as FileSystem from "expo-file-system";
 import { Asset } from "expo-asset";
 
+import { TouchableNativeFeedback } from "react-native-gesture-handler";
+
 const MainScreen = (props) => {
   const [loading, setLoading] = useState(false);
   const [fare, setFare] = useState("");
   const [fareAc, setFareAc] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const AD_URL = "https://wa.me/918369912192?text=I'm%20interested%20in%20reselling%20send%20me%20details.";
-  
-  const run = async()=>{
-    await setTestDeviceIDAsync('EMULATOR');
-  }
+  const AD_URL =
+    "https://wa.me/918369912192?text=I'm%20interested%20in%20reselling%20send%20me%20details.";
 
-  useEffect(()=>{
-   run() 
-   getDataBase();
-  },[])
+  const run = async () => {
+    await setTestDeviceIDAsync("EMULATOR");
+  };
+
+  const db = SQLite.openDatabase("bus_details.db");
+
+  useEffect(() => {
+    run();
+    getDataBase();
+  }, []);
 
   const getDataBase = async () => {
     //copy db from assets to android mobile folder
@@ -62,10 +75,12 @@ const MainScreen = (props) => {
   const disabled = source === null || destination === null;
   let sourceLabel;
   let destinationLabel;
+  let route1;
 
   if (source) {
     let testing = source.split(",").splice(-3);
     sourceLabel = testing[0] + " " + testing[1];
+    route1 = testing[0];
     // console.log(testing)
   }
   //extract last 2 words i.e town name & state
@@ -80,15 +95,27 @@ const MainScreen = (props) => {
     props.navigation.navigate("Source");
   };
 
- 
-
   const handleDestination = () => {
     setFare("");
     props.navigation.navigate("Destination");
   };
 
+  const findRoutes = () => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        `SELECT Route FROM ROUTES WHERE Stop like '%COLABA BUS STATION%' AND Route in (SELECT Route FROM ROUTES WHERE Stop like '%SASOON DOCK%')`,
+        [],
+        (_, { rows: { _array } }) => console.log(_array)
+        // (_, { rows: { _array } }) => setStops(_array.map(obj => obj.stop_names))
+        // (_, { rows: { _array } }) => setStops(_array)
+      );
+    });
+  };
+
   const calculate = async () => {
     setLoading(true);
+
+    findRoutes();
 
     const key =
       "AnPSIKEpw6oTQZGAOVik_RSMIDsa6FhOwRpzSa__hHFs3sZCxhIWSKl7spFcw4KI";
@@ -137,14 +164,44 @@ const MainScreen = (props) => {
     // More than 15 km: Non-AC Rs 20 | AC Rs 25
   };
 
+  const modal = (
+    <View style={styles.centeredView}>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          Alert.alert("Modal has been closed.");
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>Hello World!</Text>
+
+            <TouchableHighlight
+              style={{ ...styles.openButton, backgroundColor: "#2196F3" }}
+              onPress={() => {
+                setModalVisible(!modalVisible);
+              }}
+            >
+              <Text style={styles.textStyle}>Hide Modal</Text>
+            </TouchableHighlight>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+
   return (
     <View style={styles.screen}>
+      {modal}
+
       <View
         style={{
           flexDirection: "row",
           marginVertical: 10,
           justifyContent: "space-around",
-          width:'100%'
+          width: "100%",
         }}
       >
         <Text style={styles.label}>Source</Text>
@@ -165,7 +222,7 @@ const MainScreen = (props) => {
           flexDirection: "row",
           // margin: 10,
           justifyContent: "space-around",
-          width:'100%'
+          width: "100%",
         }}
       >
         <Text style={styles.label}>Destination</Text>
@@ -197,25 +254,153 @@ const MainScreen = (props) => {
         />
       )}
 
-      {fare.length !== 0 && (
+      <ScrollView
+        style={{
+          alignSelf: "center",
+          backgroundColor: Colors.accent,
+          marginTop: 50,
+          marginBottom: 100,
+          width: "95%",
+          padding: 15,
+        }}
+      >
+        {fare.length !== 0 && (
+          <View>
+            <Text style={styles.title}>Fare</Text>
+            <Text style={{ fontSize: 18, marginVertical: 5 }}>
+              Non AC - <Text style={styles.fare}>₹ {fare}</Text>
+            </Text>
+            <Text style={{ fontSize: 18, marginVertical: 5 }}>
+              AC - <Text style={styles.fare}>₹ {fareAc}</Text>
+            </Text>
+          </View>
+        )}
+
+        <Text style={styles.title}>Available Bus</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+          <TouchableOpacity
+            style={styles.btnRoute}
+            onPress={() => {
+              setModalVisible(true);
+            }}
+          >
+            <Text style={styles.route}> 221 LTD </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 1 LTD </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 27 </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 21 LTD </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 20 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 42 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 221 LTD </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 55 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 12 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 10 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 55 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 12 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 10 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 55 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 12 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 10 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 55 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 12 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 10 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 55 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 12 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 10 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 55 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 12 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 10 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 55 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 12 </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.btnRoute}>
+            <Text style={styles.route}> 10 </Text>
+          </TouchableOpacity>
+        </View>
         <View
           style={{
-            alignSelf: "center",
-            backgroundColor: Colors.accent,
-            marginTop: 50,
-            width: "95%",
-            padding: 10,
+            height: 50,
           }}
-        >
-          <Text style={{ fontSize: 22, fontWeight: "bold" }}>Fare</Text>
-          <Text style={{ fontSize: 18, marginVertical: 5 }}>
-            Non AC - <Text style={{ fontWeight: "bold" }}>₹ {fare}</Text>
-          </Text>
-          <Text style={{ fontSize: 18, marginVertical: 5 }}>
-            AC - <Text style={{ fontWeight: "bold" }}>₹ {fareAc}</Text>
-          </Text>
-        </View>
-      )}
+        ></View>
+      </ScrollView>
+
       {/* <View style={styles.bottomBanner}>
       <AdMobBanner
         bannerSize='fullBanner'
@@ -227,7 +412,7 @@ const MainScreen = (props) => {
       <Text>Ads</Text> 
       </View>*/}
 
-<TouchableOpacity
+      <TouchableOpacity
         style={{
           ...styles.bottomBanner,
           borderColor: "yellow",
@@ -253,21 +438,22 @@ const MainScreen = (props) => {
 MainScreen.navigationOptions = (navigationData) => {
   const handleShare = () => {
     const text =
-    `Only App to find B.E.S.T Bus Fare in Mumbai \n` +
-    `\n\n Install App Here - https://play.google.com/store/apps/details?id=com.mumbai.busfarecalculator&hl=en_IN`;
+      `Only App to find B.E.S.T Bus Fare in Mumbai \n` +
+      `\n\n Install App Here - https://play.google.com/store/apps/details?id=com.mumbai.busfarecalculator&hl=en_IN`;
 
-  Share.share({
-    message: text,
-  });
+    Share.share({
+      message: text,
+    });
   };
 
   const handleFeedback = () => {
-    
-      Linking.openURL('mailto:swaptrofficial@gmail.com?subject=Bus%20Fare%20Calculator%20Help&body=This%20Feedback%20Is%20Regarding..')
+    Linking.openURL(
+      "mailto:swaptrofficial@gmail.com?subject=Bus%20Fare%20Calculator%20Help&body=This%20Feedback%20Is%20Regarding.."
+    );
   };
 
   const handleAbout = () => {
-    Toast.show("Bus Fare Calculator")
+    Toast.show("Bus Fare Calculator");
   };
 
   return {
@@ -293,7 +479,7 @@ MainScreen.navigationOptions = (navigationData) => {
       </View>
     ),
     headerRight: () => (
-      <View style={{marginRight:5}}>
+      <View style={{ marginRight: 5 }}>
         <Menu>
           <MenuTrigger>
             <Entypo
@@ -327,7 +513,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  label: { color: Colors.accent, fontSize: 18, padding: 10 ,width:'40%'},
+  label: { color: Colors.accent, fontSize: 18, padding: 10, width: "40%" },
   input: {
     color: Colors.accent,
     borderBottomWidth: 2,
@@ -338,8 +524,62 @@ const styles = StyleSheet.create({
   menuOption: { margin: 5 },
   bottomBanner: {
     position: "absolute",
-    bottom: 0
-  }
+    bottom: 0,
+  },
+  title: { fontSize: 22, fontWeight: "bold" },
+  fare: { fontWeight: "bold", color: "green" },
+  route: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginVertical: 2,
+    color: "white",
+    alignSelf: "center",
+  },
+  btnRoute: {
+    width: "30%",
+    backgroundColor: "#FF4500",
+    padding: 4,
+    borderRadius: 8,
+    marginVertical: 4,
+    marginHorizontal: 4,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+  },
+  modalView: {
+    width: "80%",
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  openButton: {
+    backgroundColor: "#F194FF",
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center",
+  },
 });
 
 export default MainScreen;
