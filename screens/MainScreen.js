@@ -34,6 +34,7 @@ import {
 import * as SQLite from "expo-sqlite";
 import * as FileSystem from "expo-file-system";
 import { Asset } from "expo-asset";
+import { AntDesign } from "@expo/vector-icons";
 
 import { TouchableNativeFeedback } from "react-native-gesture-handler";
 
@@ -42,6 +43,31 @@ const MainScreen = (props) => {
   const [fare, setFare] = useState("");
   const [fareAc, setFareAc] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
+  const [fullRoute, setFullRoute] = useState([
+    "dc",
+    "ko",
+    "vaa",
+    "req",
+    "as",
+    "dd",
+    "cf",
+    "lp",
+    "nm",
+    "hgk",
+    "oop",
+    "wert",
+    "bar",
+    "fro",
+    "vv",
+    "iop",
+    "hgk",
+    "oop",
+    "wert",
+    "bar",
+    "fro",
+    "vv",
+    "iop",
+  ]);
 
   const AD_URL =
     "https://wa.me/918369912192?text=I'm%20interested%20in%20reselling%20send%20me%20details.";
@@ -176,8 +202,10 @@ const MainScreen = (props) => {
       >
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
+            <View style={{flexDirection: "row",justifyContent:'flex-end',marginRight: -20,marginTop: -20}}>
+              <AntDesign name="closecircle" size={28} color="red" />
+            </View>
             <Text style={styles.modalText}>Hello World!</Text>
-
             <TouchableHighlight
               style={{ ...styles.openButton, backgroundColor: "#2196F3" }}
               onPress={() => {
@@ -186,6 +214,15 @@ const MainScreen = (props) => {
             >
               <Text style={styles.textStyle}>Hide Modal</Text>
             </TouchableHighlight>
+
+            <ScrollView style={{ width: "100%" }}>
+              {fullRoute &&
+                fullRoute.map((stop) => (
+                  <Text key={stop} style={styles.modalText}>
+                    {stop}
+                  </Text>
+                ))}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -551,11 +588,12 @@ const styles = StyleSheet.create({
   },
   modalView: {
     width: "80%",
+    height: 650,
     margin: 20,
     backgroundColor: "white",
     borderRadius: 20,
     padding: 35,
-    alignItems: "center",
+    // alignItems: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
