@@ -30,6 +30,7 @@ const SourceScreen = (props) => {
     });
 
     // return () => displayAd();
+    
   },[])
 
   const onSelect = (stop) => {

@@ -43,31 +43,9 @@ const MainScreen = (props) => {
   const [fare, setFare] = useState("");
   const [fareAc, setFareAc] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
-  const [fullRoute, setFullRoute] = useState([
-    "dc",
-    "ko",
-    "vaa",
-    "req",
-    "as",
-    "dd",
-    "cf",
-    "lp",
-    "nm",
-    "hgk",
-    "oop",
-    "wert",
-    "bar",
-    "fro",
-    "vv",
-    "iop",
-    "hgk",
-    "oop",
-    "wert",
-    "bar",
-    "fro",
-    "vv",
-    "iop",
-  ]);
+  const [fullRoute, setFullRoute] = useState([]);
+  const [towards, setTowards] = useState("");
+  const [routes, setRoutes] = useState([]);
 
   const AD_URL =
     "https://wa.me/918369912192?text=I'm%20interested%20in%20reselling%20send%20me%20details.";
@@ -81,6 +59,7 @@ const MainScreen = (props) => {
   useEffect(() => {
     run();
     getDataBase();
+
   }, []);
 
   const getDataBase = async () => {
@@ -131,12 +110,29 @@ const MainScreen = (props) => {
       tx.executeSql(
         `SELECT Route FROM ROUTES WHERE Stop like '%COLABA BUS STATION%' AND Route in (SELECT Route FROM ROUTES WHERE Stop like '%SASOON DOCK%')`,
         [],
-        (_, { rows: { _array } }) => console.log(_array)
-        // (_, { rows: { _array } }) => setStops(_array.map(obj => obj.stop_names))
+        // (_, { rows: { _array } }) => console.log(_array)
+        (_, { rows: { _array } }) => setRoutes(_array.map((obj) => obj.Route))
         // (_, { rows: { _array } }) => setStops(_array)
       );
     });
   };
+
+  const handleRoute = (route) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        `SELECT * FROM ROUTES WHERE Route="${route}"`,
+        [],
+        // (_, { rows: { _array } }) => console.log(_array)
+        // (_, { rows: { _array } }) => setRoutes(_array.map((obj) => obj.Route))
+        (_, { rows: { _array } }) => {
+          setFullRoute(_array)
+          // setTowards(_array.filter(obj => obj.Order == 1))
+          setTowards(_array.filter(obj => obj.Order == _array.length)[0])
+        }
+      );
+    });
+    setModalVisible(true);
+  }
 
   const calculate = async () => {
     setLoading(true);
@@ -202,24 +198,43 @@ const MainScreen = (props) => {
       >
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
-            <View style={{flexDirection: "row",justifyContent:'flex-end',marginRight: -20,marginTop: -20}}>
-              <AntDesign name="closecircle" size={28} color="red" />
-            </View>
-            <Text style={styles.modalText}>Hello World!</Text>
+            <TouchableHighlight
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                marginRight: -20,
+                marginTop: -20,
+              }}
+            >
+              <AntDesign
+                style={{ flexWrap: "wrap" }}
+                name="closecircle"
+                size={28}
+                color="red"
+                onPress={() => {
+                  setModalVisible(!modalVisible);
+                }}
+              />
+            </TouchableHighlight>
+
             <TouchableHighlight
               style={{ ...styles.openButton, backgroundColor: "#2196F3" }}
               onPress={() => {
-                setModalVisible(!modalVisible);
+                if (towards == fullRoute[0]) {
+                  setTowards(fullRoute[fullRoute.length - 1]);
+                } else {
+                  setTowards(fullRoute[0]);
+                }
               }}
             >
-              <Text style={styles.textStyle}>Hide Modal</Text>
+              <Text style={styles.textStyle}>Towards {towards.Stop}</Text>
             </TouchableHighlight>
 
             <ScrollView style={{ width: "100%" }}>
               {fullRoute &&
-                fullRoute.map((stop) => (
-                  <Text key={stop} style={styles.modalText}>
-                    {stop}
+                fullRoute.map((obj, i) => (
+                  <Text key={i} style={styles.modalText}>
+                    {obj.Stop}
                   </Text>
                 ))}
             </ScrollView>
@@ -231,8 +246,6 @@ const MainScreen = (props) => {
 
   return (
     <View style={styles.screen}>
-      {modal}
-
       <View
         style={{
           flexDirection: "row",
@@ -291,17 +304,17 @@ const MainScreen = (props) => {
         />
       )}
 
-      <ScrollView
-        style={{
-          alignSelf: "center",
-          backgroundColor: Colors.accent,
-          marginTop: 50,
-          marginBottom: 100,
-          width: "95%",
-          padding: 15,
-        }}
-      >
-        {fare.length !== 0 && (
+      {fare.length !== 0 && routes.length > 0 && (
+        <ScrollView
+          style={{
+            alignSelf: "center",
+            backgroundColor: Colors.accent,
+            marginTop: 50,
+            marginBottom: 100,
+            width: "95%",
+            padding: 15,
+          }}
+        >
           <View>
             <Text style={styles.title}>Fare</Text>
             <Text style={{ fontSize: 18, marginVertical: 5 }}>
@@ -311,132 +324,27 @@ const MainScreen = (props) => {
               AC - <Text style={styles.fare}>₹ {fareAc}</Text>
             </Text>
           </View>
-        )}
 
-        <Text style={styles.title}>Available Bus</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-          <TouchableOpacity
-            style={styles.btnRoute}
-            onPress={() => {
-              setModalVisible(true);
+          <Text style={styles.title}>Available Bus</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+            {routes &&
+              routes.map((route, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={styles.btnRoute}
+                  onPress={() => handleRoute(route)}
+                >
+                  <Text style={styles.route}> {route} </Text>
+                </TouchableOpacity>
+              ))}
+          </View>
+          <View
+            style={{
+              height: 50,
             }}
-          >
-            <Text style={styles.route}> 221 LTD </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 1 LTD </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 27 </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 21 LTD </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 20 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 42 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 221 LTD </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 55 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 12 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 10 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 55 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 12 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 10 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 55 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 12 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 10 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 55 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 12 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 10 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 55 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 12 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 10 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 55 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 12 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 10 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 55 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 12 </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnRoute}>
-            <Text style={styles.route}> 10 </Text>
-          </TouchableOpacity>
-        </View>
-        <View
-          style={{
-            height: 50,
-          }}
-        ></View>
-      </ScrollView>
+          ></View>
+        </ScrollView>
+      )}
 
       {/* <View style={styles.bottomBanner}>
       <AdMobBanner
@@ -468,6 +376,7 @@ const MainScreen = (props) => {
           style={{ resizeMode: "stretch", width: "100%" }}
         />
       </TouchableOpacity>
+      {modal}
     </View>
   );
 };
@@ -607,12 +516,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#F194FF",
     borderRadius: 20,
     padding: 10,
-    elevation: 2,
+    elevation: 2
   },
   textStyle: {
     color: "white",
     fontWeight: "bold",
     textAlign: "center",
+    fontSize: 14
   },
   modalText: {
     marginBottom: 15,

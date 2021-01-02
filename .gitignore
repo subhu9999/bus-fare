@@ -13,3 +13,5 @@ web-report/
 # macOS
 .DS_Store
 screens/MainScreen.js
+assets/db/BUS_DETAILS.sqbpro
+debug.log
