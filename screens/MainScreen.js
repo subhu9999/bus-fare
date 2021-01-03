@@ -23,7 +23,6 @@ import {
   MenuOption,
   MenuTrigger,
 } from "react-native-popup-menu";
-import { Entypo } from "@expo/vector-icons";
 import Toast from "react-native-simple-toast";
 import {
   AdMobBanner,
@@ -34,7 +33,7 @@ import {
 import * as SQLite from "expo-sqlite";
 import * as FileSystem from "expo-file-system";
 import { Asset } from "expo-asset";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, Feather, Entypo } from "@expo/vector-icons";
 
 import { TouchableNativeFeedback } from "react-native-gesture-handler";
 
@@ -59,7 +58,6 @@ const MainScreen = (props) => {
   useEffect(() => {
     run();
     getDataBase();
-
   }, []);
 
   const getDataBase = async () => {
@@ -125,14 +123,14 @@ const MainScreen = (props) => {
         // (_, { rows: { _array } }) => console.log(_array)
         // (_, { rows: { _array } }) => setRoutes(_array.map((obj) => obj.Route))
         (_, { rows: { _array } }) => {
-          setFullRoute(_array)
+          setFullRoute(_array);
           // setTowards(_array.filter(obj => obj.Order == 1))
-          setTowards(_array.filter(obj => obj.Order == _array.length)[0])
+          setTowards(_array.filter((obj) => obj.Order == _array.length)[0]);
         }
       );
     });
     setModalVisible(true);
-  }
+  };
 
   const calculate = async () => {
     setLoading(true);
@@ -225,9 +223,18 @@ const MainScreen = (props) => {
                 } else {
                   setTowards(fullRoute[0]);
                 }
+
+                setFullRoute([...fullRoute].reverse());
               }}
             >
-              <Text style={styles.textStyle}>Towards {towards.Stop}</Text>
+              <React.Fragment>
+                <Text style={styles.textStyle}>Towards </Text>
+                <Text style={styles.textStyle}>
+                  <Feather name="chevrons-down" size={20} color="white" />
+                  {towards.Stop}
+                  <Feather name="chevrons-down" size={20} color="white" />
+                </Text>
+              </React.Fragment>
             </TouchableHighlight>
 
             <ScrollView style={{ width: "100%" }}>
@@ -501,7 +508,7 @@ const styles = StyleSheet.create({
     margin: 20,
     backgroundColor: "white",
     borderRadius: 20,
-    padding: 35,
+    padding: 30,
     // alignItems: "center",
     shadowColor: "#000",
     shadowOffset: {
@@ -516,13 +523,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#F194FF",
     borderRadius: 20,
     padding: 10,
-    elevation: 2
+    elevation: 2,
   },
   textStyle: {
     color: "white",
     fontWeight: "bold",
     textAlign: "center",
-    fontSize: 14
+    fontSize: 14,
   },
   modalText: {
     marginBottom: 15,
