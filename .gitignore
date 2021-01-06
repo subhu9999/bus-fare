@@ -15,3 +15,4 @@ web-report/
 screens/MainScreen.js
 assets/db/BUS_DETAILS.sqbpro
 debug.log
+api.js

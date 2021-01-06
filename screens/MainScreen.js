@@ -29,6 +29,7 @@ import {
   setTestDeviceIDAsync,
   AdMobInterstitial,
 } from "expo-ads-admob";
+import { GOOGLE_KEY, BING_KEY } from "../api";
 
 import * as SQLite from "expo-sqlite";
 import * as FileSystem from "expo-file-system";
@@ -36,6 +37,9 @@ import { Asset } from "expo-asset";
 import { AntDesign, Feather, Entypo } from "@expo/vector-icons";
 
 import { TouchableNativeFeedback } from "react-native-gesture-handler";
+
+//set false to use bing api
+const useGoogle = true;
 
 const MainScreen = (props) => {
   const [loading, setLoading] = useState(false);
@@ -78,7 +82,7 @@ const MainScreen = (props) => {
   const disabled = source === null || destination === null;
   let sourceLabel;
   let destinationLabel;
-  let route1;
+  let route1, route2;
 
   if (source) {
     let testing = source.split(",").splice(-3);
@@ -90,6 +94,7 @@ const MainScreen = (props) => {
   if (destination) {
     let testing = destination.split(",").splice(-3);
     destinationLabel = testing[0] + " " + testing[1];
+    route2 = testing[0];
     // console.log(filterCity)
   }
 
@@ -137,45 +142,92 @@ const MainScreen = (props) => {
 
     findRoutes();
 
-    const key =
-      "AnPSIKEpw6oTQZGAOVik_RSMIDsa6FhOwRpzSa__hHFs3sZCxhIWSKl7spFcw4KI";
     const wayPoint1 = encodeURI(source);
     // console.log(wayPoint1);
     const wayPoint2 = encodeURI(destination);
 
-    try {
-      let response = await fetch(
-        `http://dev.virtualearth.net/REST/v1/Routes?wayPoint.1=${wayPoint1}&waypoint.2=${wayPoint2}&optimize=distance&maxSolutions=1&key=${key}`
-      );
-      let responseJson = await response.json();
-      // console.log(responseJson.resourceSets[0].resources[0].travelDistance);
-      const distance = responseJson.resourceSets[0].resources[0].travelDistance;
-      let fare;
-      let fareAc;
-      if (distance > 0 && distance <= 7) {
-        fare = 5;
-        fareAc = 6;
-      } else if (distance > 7 && distance <= 12) {
-        fare = 10;
-        fareAc = 13;
-      } else if (distance > 12 && distance <= 17) {
-        fare = 15;
-        fareAc = 19;
-      } else if (distance > 17) {
-        fare = 20;
-        fareAc = 25;
-      } else {
-        fare = 0;
-        fareAc = 0;
-      }
+    // console.log(sourceLabel);
+    // console.log(route2);
 
-      setFare(fare);
-      setFareAc(fareAc);
-      setLoading(false);
-      return responseJson;
-    } catch (error) {
-      setLoading(false);
-      console.error(error);
+    if (useGoogle) {
+      try {
+        let response = await fetch(
+          //directions api
+          `https://maps.googleapis.com/maps/api/directions/json?origin=${wayPoint1}&destination=${wayPoint2}&key=${GOOGLE_KEY}`
+        );
+        let responseJson = await response.json();
+        if (responseJson.status == "OK") {
+          // console.log(responseJson.routes[0].legs[0].distance.value);
+          const distance = responseJson.routes[0].legs[0].distance.value / 1000;
+          let fare;
+          let fareAc;
+          if (distance > 0 && distance <= 5) {
+            fare = 5;
+            fareAc = 6;
+          } else if (distance > 5 && distance <= 10) {
+            fare = 10;
+            fareAc = 13;
+          } else if (distance > 10 && distance <= 15) {
+            fare = 15;
+            fareAc = 19;
+          } else if (distance > 15) {
+            fare = 20;
+            fareAc = 25;
+          } else {
+            fare = 0;
+            fareAc = 0;
+          }
+
+          setFare(fare);
+          setFareAc(fareAc);
+          setLoading(false);
+        } else {
+          setLoading(false);
+          Toast.show("No Data Found !");
+        }
+
+        return responseJson;
+      } catch (error) {
+        setLoading(false);
+        console.error(error);
+      }
+    } else {
+      try {
+        let response = await fetch(
+          //bing api
+          `http://dev.virtualearth.net/REST/v1/Routes?wayPoint.1=${wayPoint1}&waypoint.2=${wayPoint2}&optimize=distance&maxSolutions=1&key=${BING_KEY}`
+        );
+        let responseJson = await response.json();
+        // console.log(responseJson.resourceSets[0].resources[0].travelDistance);
+        const distance =
+          responseJson.resourceSets[0].resources[0].travelDistance;
+        let fare;
+        let fareAc;
+        if (distance > 0 && distance <= 7) {
+          fare = 5;
+          fareAc = 6;
+        } else if (distance > 7 && distance <= 12) {
+          fare = 10;
+          fareAc = 13;
+        } else if (distance > 12 && distance <= 17) {
+          fare = 15;
+          fareAc = 19;
+        } else if (distance > 17) {
+          fare = 20;
+          fareAc = 25;
+        } else {
+          fare = 0;
+          fareAc = 0;
+        }
+
+        setFare(fare);
+        setFareAc(fareAc);
+        setLoading(false);
+        return responseJson;
+      } catch (error) {
+        setLoading(false);
+        console.error(error);
+      }
     }
 
     //     Upto 5 km: Non-AC Rs 5 | AC Rs 6
@@ -332,7 +384,7 @@ const MainScreen = (props) => {
             </Text>
           </View>
 
-          <Text style={styles.title}>Available Bus</Text>
+          {/* <Text style={styles.title}>Available Bus</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
             {routes &&
               routes.map((route, i) => (
@@ -349,7 +401,7 @@ const MainScreen = (props) => {
             style={{
               height: 50,
             }}
-          ></View>
+          ></View> */}
         </ScrollView>
       )}
 
