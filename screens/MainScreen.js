@@ -50,6 +50,8 @@ const MainScreen = (props) => {
   const [towards, setTowards] = useState("");
   const [routes, setRoutes] = useState([]);
 
+  const db = SQLite.openDatabase("bus_details.db");
+
   const AD_URL =
     "https://wa.me/918369912192?text=I'm%20interested%20in%20reselling%20send%20me%20details.";
 
@@ -57,11 +59,10 @@ const MainScreen = (props) => {
     await setTestDeviceIDAsync("EMULATOR");
   };
 
-  const db = SQLite.openDatabase("bus_details.db");
-
   useEffect(() => {
     run();
-    getDataBase();
+    // getDataBase();
+    downloadBackupAndReplace();
   }, []);
 
   const getDataBase = async () => {
@@ -69,13 +70,76 @@ const MainScreen = (props) => {
 
     const internalDbName = "bus_details.db"; // Call whatever you want
     const sqlDir = FileSystem.documentDirectory + "SQLite/";
-    if (!(await FileSystem.getInfoAsync(sqlDir + internalDbName)).exists) {
-      console.log("inside");
-      await FileSystem.makeDirectoryAsync(sqlDir, { intermediates: true });
-      const asset = Asset.fromModule(require("../assets/db/BUS_DETAILS.db"));
-      await FileSystem.downloadAsync(asset.uri, sqlDir + internalDbName);
+    // if (!(await FileSystem.getInfoAsync(sqlDir + internalDbName)).exists) {
+    if ((await FileSystem.getInfoAsync(sqlDir + internalDbName)).exists) {
+      try {
+        // db._db.close();
+        await FileSystem.deleteAsync(sqlDir+internalDbName);
+      } catch (e) {
+        console.log(e);
+      }
+
+      // console.log("to delete");
     }
+    console.log("inside");
+    await FileSystem.makeDirectoryAsync(sqlDir, { intermediates: true });
+    const asset = Asset.fromModule(require("../assets/db/BUS_DETAILS.db"));
+    await FileSystem.downloadAsync(asset.uri, sqlDir + internalDbName);
+
+    // }
   };
+
+  //start
+  async function getSQLiteFileList() {
+    try {
+      const filesPath = `${FileSystem.documentDirectory}SQLite/`;
+      const filesDirectory = await FileSystem.readDirectoryAsync(filesPath);
+      console.log(`SQLite Files:`);
+      console.log(filesDirectory);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async function downloadBackupAndReplace() {
+    try {
+      const asset = Asset.fromModule(require("../assets/db/BUS_DETAILS.db"));
+      const internalDbName = "bus_details.db"; // Call whatever you want
+      const sqlDir = FileSystem.documentDirectory + "SQLite/";
+
+      const newBackupUri = `${FileSystem.documentDirectory}SQLite/backup-database.db`;
+      const databaseUri = `${FileSystem.documentDirectory}SQLite/bus_details.db`;
+
+      //download new database file
+      await FileSystem.downloadAsync(asset.uri, newBackupUri);
+
+      console.log("backup downloaded:");
+      await getSQLiteFileList();
+
+      // delete current database files
+      await FileSystem.deleteAsync(`${databaseUri}`, { idempotent: true });
+      await FileSystem.deleteAsync(`${databaseUri}-journal`, {
+        idempotent: true,
+      });
+
+      console.log("initial database files deleted");
+      await getSQLiteFileList();
+
+      // rename backup to current database name
+      await FileSystem.moveAsync({
+        from: newBackupUri,
+        to: databaseUri,
+      });
+
+      console.log("backup renamed");
+      await getSQLiteFileList();
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  
+  //end
 
   const { source, destination } = useSelector((state) => state.busStop);
 
