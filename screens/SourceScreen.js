@@ -5,6 +5,7 @@ import Colors from '../constants/Colors'
 import {useDispatch} from 'react-redux';
 import { setSource } from "../store/actions/busActions";
 import * as SQLite from "expo-sqlite";
+import { LATEST_DB } from "../constants/Strings";
 
 const SourceScreen = (props) => {
   const [stops, setStops] = useState([]);
@@ -13,7 +14,8 @@ const SourceScreen = (props) => {
 
   const dispatch = useDispatch()
 
-  const db = SQLite.openDatabase("bus_details.db");
+  //change db_name  when update db
+  const db = SQLite.openDatabase(LATEST_DB);
   const run = async()=>{
     // await setTestDeviceIDAsync('EMULATOR');
   }

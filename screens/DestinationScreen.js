@@ -13,13 +13,16 @@ import { useDispatch } from "react-redux";
 import { setDestination } from "../store/actions/busActions";
 import {AdMobBanner, setTestDeviceIDAsync,AdMobInterstitial} from 'expo-ads-admob';
 import * as SQLite from "expo-sqlite";
+import { LATEST_DB } from "../constants/Strings";
 
 const DestinationScreen = (props) => {
   const [stops, setStops] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const dispatch = useDispatch();
-  const db = SQLite.openDatabase("bus_details.db");
+
+  //change db name when update db 
+  const db = SQLite.openDatabase(LATEST_DB);
 
   const run = async()=>{
     await setTestDeviceIDAsync('EMULATOR');

@@ -37,6 +37,7 @@ import { Asset } from "expo-asset";
 import { AntDesign, Feather, Entypo } from "@expo/vector-icons";
 
 import { TouchableNativeFeedback } from "react-native-gesture-handler";
+import { LATEST_DB } from "../constants/Strings";
 
 //set false to use bing api
 const useGoogle = true;
@@ -61,85 +62,23 @@ const MainScreen = (props) => {
 
   useEffect(() => {
     run();
-    // getDataBase();
-    downloadBackupAndReplace();
+    getDataBase();
+    // downloadBackupAndReplace();
   }, []);
 
   const getDataBase = async () => {
     //copy db from assets to android mobile folder
 
-    const internalDbName = "bus_details.db"; // Call whatever you want
+    //change db name when db is updated
+    const internalDbName = LATEST_DB; // Call whatever you want
     const sqlDir = FileSystem.documentDirectory + "SQLite/";
-    // if (!(await FileSystem.getInfoAsync(sqlDir + internalDbName)).exists) {
-    if ((await FileSystem.getInfoAsync(sqlDir + internalDbName)).exists) {
-      try {
-        // db._db.close();
-        await FileSystem.deleteAsync(sqlDir+internalDbName);
-      } catch (e) {
-        console.log(e);
-      }
-
-      // console.log("to delete");
-    }
-    console.log("inside");
-    await FileSystem.makeDirectoryAsync(sqlDir, { intermediates: true });
-    const asset = Asset.fromModule(require("../assets/db/BUS_DETAILS.db"));
-    await FileSystem.downloadAsync(asset.uri, sqlDir + internalDbName);
-
-    // }
-  };
-
-  //start
-  async function getSQLiteFileList() {
-    try {
-      const filesPath = `${FileSystem.documentDirectory}SQLite/`;
-      const filesDirectory = await FileSystem.readDirectoryAsync(filesPath);
-      console.log(`SQLite Files:`);
-      console.log(filesDirectory);
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
-  async function downloadBackupAndReplace() {
-    try {
+    if (!(await FileSystem.getInfoAsync(sqlDir + internalDbName)).exists) {
+      console.log("inside");
+      await FileSystem.makeDirectoryAsync(sqlDir, { intermediates: true });
       const asset = Asset.fromModule(require("../assets/db/BUS_DETAILS.db"));
-      const internalDbName = "bus_details.db"; // Call whatever you want
-      const sqlDir = FileSystem.documentDirectory + "SQLite/";
-
-      const newBackupUri = `${FileSystem.documentDirectory}SQLite/backup-database.db`;
-      const databaseUri = `${FileSystem.documentDirectory}SQLite/bus_details.db`;
-
-      //download new database file
-      await FileSystem.downloadAsync(asset.uri, newBackupUri);
-
-      console.log("backup downloaded:");
-      await getSQLiteFileList();
-
-      // delete current database files
-      await FileSystem.deleteAsync(`${databaseUri}`, { idempotent: true });
-      await FileSystem.deleteAsync(`${databaseUri}-journal`, {
-        idempotent: true,
-      });
-
-      console.log("initial database files deleted");
-      await getSQLiteFileList();
-
-      // rename backup to current database name
-      await FileSystem.moveAsync({
-        from: newBackupUri,
-        to: databaseUri,
-      });
-
-      console.log("backup renamed");
-      await getSQLiteFileList();
-    } catch (err) {
-      console.log(err);
+      await FileSystem.downloadAsync(asset.uri, sqlDir + internalDbName);
     }
-  }
-
-  
-  //end
+  };
 
   const { source, destination } = useSelector((state) => state.busStop);
 
