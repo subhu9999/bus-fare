@@ -39,7 +39,7 @@ const DestinationScreen = (props) => {
         );
     });
 
-    return () => displayAd();
+    // return () => displayAd();
   }, []);
 
   const displayAd = async () => {

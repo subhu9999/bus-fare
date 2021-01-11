@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "232542121441",
+    "project_id": "busfarecalculator-1b24c",
+    "storage_bucket": "busfarecalculator-1b24c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:232542121441:android:d51a7e5ccb1668eadef6a0",
+        "android_client_info": {
+          "package_name": "com.mumbai.busfarecalculator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "232542121441-m0gi8gquknd0vkgi49veme1epove9a77.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeWiNNvr0SzvVMe1fGo2rSQXF0vfqlQns"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "232542121441-m0gi8gquknd0vkgi49veme1epove9a77.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -16,7 +16,7 @@
       "backgroundColor": "#ffffff"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 15000
     },
     "assetBundlePatterns": [
       "**/*"
@@ -26,7 +26,8 @@
     },
     "android": {
       "package": "com.mumbai.busfarecalculator",
-      "versionCode": 6,
+      "versionCode": 7,
+      "googleServicesFile": "./google-services.json",
       "config":{
         "googleMobileAdsAppId": "ca-app-pub-7589498491080333~2369849870"
       },
