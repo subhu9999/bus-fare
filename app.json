@@ -21,6 +21,12 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "notification": {
+      "icon": "./assets/icon-notification.png",
+      "color":"#FF0D0D",
+      "androidMode": "collapse",
+      "androidCollapsedTitle": "#{unread_notifications} New Notification"
+    },
     "ios": {
       "supportsTablet": true
     },

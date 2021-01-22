@@ -37,7 +37,17 @@ import { Asset } from "expo-asset";
 import { AntDesign, Feather, Entypo } from "@expo/vector-icons";
 
 import { TouchableNativeFeedback } from "react-native-gesture-handler";
-import { LATEST_DB } from "../constants/Strings";
+import {
+  ASYNC_EXPO_TOKEN,
+  ASYNC_UPLOADED,
+  LATEST_DB,
+  TOKENS_BATCH,
+  TOKEN_COLLECTION,
+} from "../constants/Strings";
+import { Notifications } from "expo";
+import * as Permissions from "expo-permissions";
+import firebase from "../firebase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 //set false to use bing api
 const useGoogle = true;
@@ -63,8 +73,81 @@ const MainScreen = (props) => {
   useEffect(() => {
     run();
     getDataBase();
-    // downloadBackupAndReplace();
+    registerForPushNotificationsAsync();
   }, []);
+
+  //admin function used to send notifications
+  const sendNotifications = () => {};
+
+  const registerForPushNotificationsAsync = async () => {
+    try {
+      const value = await AsyncStorage.getItem(ASYNC_EXPO_TOKEN);
+
+      if (value == null) {
+        // value not previously stored
+        if (Constants.isDevice) {
+          const {
+            status: existingStatus,
+          } = await Notifications.getPermissionsAsync();
+
+          let finalStatus = existingStatus;
+
+          if (existingStatus !== "granted") {
+            const { status } = await Notifications.requestPermissionsAsync();
+            finalStatus = status;
+          }
+
+          if (finalStatus !== "granted") {
+            alert("Failed to get push token for push notification!");
+            return;
+          }
+          const token = (await Notifications.getExpoPushTokenAsync()).data;
+
+          console.log(token);
+
+         
+          // let token = "oooop";
+
+          const firestore = firebase.firestore();
+
+          await firestore
+            .collection(TOKEN_COLLECTION)
+            .doc(TOKENS_BATCH)
+            .update({
+              Tokens: firebase.firestore.FieldValue.arrayUnion(token),
+            })
+            .then(function () {
+              // Toast.show("Post Created Successfully !");
+              console.log("done");
+
+               //save token to async
+            try {
+              await AsyncStorage.setItem(ASYNC_EXPO_TOKEN, token);
+              }   catch (e) {
+            // saving error
+              }
+            })
+            .catch(function (error) {
+              console.log(error);
+              return;
+            });
+        } else {
+          alert("Must use physical device for Push Notifications");
+        }
+
+        if (Platform.OS === "android") {
+          Notifications.setNotificationChannelAsync("default", {
+            name: "default",
+            importance: Notifications.AndroidImportance.MAX,
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: "#FF231F7C",
+          });
+        }
+      }
+    } catch (e) {
+      // error reading value
+    }
+  };
 
   const getDataBase = async () => {
     //copy db from assets to android mobile folder
